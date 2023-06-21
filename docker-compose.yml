@@ -1,0 +1,111 @@
+version: '3'
+
+volumes:
+  auto_trade_data_volume:
+    name: auto_fx_data
+
+  backtest_data_volume:
+    name: backtest_data
+
+
+networks:
+  network1:
+    name: auto_trade_project
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.18.0.0/24
+
+
+services:
+  python:
+    build:
+      context: ./
+      target: ${AUTO_TRADE_TARGET_DEV}
+    container_name: fx_trade_app
+    networks:
+      network1:
+        ipv4_address: 172.18.0.6
+    volumes:
+      - ./fx_trading:/src
+    ports:
+      - 8800:8000
+    tty:
+      true
+    depends_on:
+      - auto_trade_db
+      - backtest_db
+
+  backtest:
+    build:
+      context: ./backtest/
+      target: ${BACKTEST_TARGET_DEV}
+    container_name: backtest_app
+    networks:
+      network1:
+        ipv4_address: 172.18.0.2
+    volumes:
+      - ./backtest:/src
+    ports:
+      - 9900:80
+    environment:
+      - DB_NAME=${BACKTEST_DB_NAME}
+      - DB_PASSWORD=${BACKTEST_DB_PASSWORD}
+      - DB_USER=${BACKTEST_DB_USER}
+    tty:
+      true
+    depends_on:
+      - auto_trade_db
+      - backtest_db
+
+  websocket:
+    build:
+      context: ./websocket
+      target: ${WEBSOCKET_TARGET_DEV}
+    container_name: websocket_app
+    networks:
+      network1:
+        ipv4_address: 172.18.0.3
+    volumes:
+      - ./websocket:/src
+    ports:
+      - 8880:80
+    tty:
+      true
+    depends_on:
+      - auto_trade_db
+      - backtest_db
+
+  auto_trade_db:
+    image: postgres:15
+    container_name: auto_trade_db
+    networks:
+      network1:
+        ipv4_address: 172.18.0.4
+    volumes:
+      - auto_trade_data_volume:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=${AUTO_TRADE_DB_PASSWORD}
+      - POSTGRES_DB=${AUTO_TRADE_DB_NAME}
+      - POSTGRES_USER=${AUTO_TRADE_DB_USER}
+    ports:
+      - 4352:5432
+    tty:
+      true
+
+  backtest_db:
+    image: postgres:15
+    container_name: backtest_db
+    networks:
+      network1:
+        ipv4_address: 172.18.0.5
+    volumes:
+      - backtest_data_volume:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=${BACKTEST_DB_PASSWORD}
+      - POSTGRES_DB=${BACKTEST_DB_NAME}
+      - POSTGRES_USER=${BACKTEST_DB_USER}
+    ports:
+      - 4325:5432
+    tty:
+      true
