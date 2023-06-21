@@ -1,0 +1,15 @@
+oanda:
+  account_id: ${ACCOUNT_ID}
+  api_password: ${PASSWORD}
+  access_token: ${ACCESS_TOKEN}
+
+db:
+  name: ${DB_NAME}
+  user: ${DB_USER}
+  password: ${DB_PASSWORD}
+  dialect: postgresql
+  driver: psycopg2
+  host: 172.18.0.5
+  port: 5432
+  
+ 

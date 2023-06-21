@@ -1,0 +1,4 @@
+sqlalchemy==2.0.17
+envyaml==1.10.211231
+psycopg2-binary
+oandapyV20
