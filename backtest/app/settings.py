@@ -52,7 +52,7 @@ LOGGING_CONFIG = {
         'level': logging.WARNING,
     },
     'loggers': {
-        'candlesticks': {
+        'models_base': {
             'handlers': ['modelsHandlers'],
             'level': logging.DEBUG,
             'propagate': 0
