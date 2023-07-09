@@ -77,7 +77,7 @@ services:
       - backtest_db
 
   auto_trade_db:
-    image: postgres:11
+    image: postgres:15
     container_name: auto_trade_db
     networks:
       network1:
@@ -86,7 +86,7 @@ services:
       - auto_trade_data_volume:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=${AUTO_TRADE_DB_PASSWORD}
-      - POSTGRES_NAME=${AUTO_TRADE_DB_NAME}
+      - POSTGRES_DB=${AUTO_TRADE_DB_NAME}
       - POSTGRES_USER=${AUTO_TRADE_DB_USER}
     ports:
       - 4352:5432
@@ -94,7 +94,7 @@ services:
       true
 
   backtest_db:
-    image: postgres:11
+    image: postgres:15
     container_name: backtest_db
     networks:
       network1:
@@ -103,7 +103,7 @@ services:
       - backtest_data_volume:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=${BACKTEST_DB_PASSWORD}
-      - POSTGRES_NAME=${BACKTEST_DB_NAME}
+      - POSTGRES_DB=${BACKTEST_DB_NAME}
       - POSTGRES_USER=${BACKTEST_DB_USER}
     ports:
       - 4325:5432
