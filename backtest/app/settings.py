@@ -1,9 +1,11 @@
 """Prepare everything you need for the app."""
 import logging
+from typing import TypeVar
 
 from envyaml import EnvYAML
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import Session as S
 from sqlalchemy.orm import sessionmaker
 
 
@@ -20,7 +22,9 @@ db_url = f'{dialect}+{driver}://{user}:{password}@{host}:{port}/{db_name}'
 
 engine = create_engine(db_url, echo=True)
 Base = declarative_base()
-session = sessionmaker(engine)
+Session = sessionmaker(engine)
+
+_S = TypeVar('_S', sessionmaker, S, covariant=True)
 
 LOGGING_CONFIG = {
     'version': 1,
@@ -56,6 +60,11 @@ LOGGING_CONFIG = {
             'handlers': ['modelsHandlers'],
             'level': logging.DEBUG,
             'propagate': 0
-        }
+        },
+        'models_candle': {
+            'handlers': ['modelsHandlers'],
+            'level': logging.DEBUG,
+            'propagate': 0
+        },
     }
 }

@@ -1,18 +1,42 @@
 """table definition."""
+import logging.config
+
 from sqlalchemy import Column
 from sqlalchemy import DateTime
 from sqlalchemy import Integer
+from sqlalchemy import Float
 
-from app.settings import Base
+from app.models.base import Base
+from app.models.base import session_scope
+from app.settings import LOGGING_CONFIG
+
+
+logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger('models_candle')
 
 
 class BaseMixin(object):
     time = Column(DateTime, primary_key=True, nullable=False)
-    open = Column(Integer)
-    close = Column(Integer)
-    high = Column(Integer)
-    low = Column(Integer)
+    open = Column(Float)
+    close = Column(Float)
+    high = Column(Float)
+    low = Column(Float)
     volume = Column(Integer)
+
+    @classmethod
+    def create(cls, time, open, close, high, low, volume) -> None:
+        candle = cls(time=time,
+                     open=open,
+                     close=close,
+                     high=high,
+                     low=low,
+                     volume=volume)
+        with session_scope() as session:
+            session.add(candle)
+        logger.debug({
+            'action': 'create a ORM-object.',
+            'status': 'success'
+        })
 
 
 class UsdJpyBaseCandle5m(BaseMixin, Base):
