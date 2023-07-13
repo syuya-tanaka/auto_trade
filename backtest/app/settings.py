@@ -1,5 +1,6 @@
 """Prepare everything you need for the app."""
 import logging
+from typing import Final
 from typing import TypeVar
 
 from envyaml import EnvYAML
@@ -25,6 +26,18 @@ Base = declarative_base()
 Session = sessionmaker(engine)
 
 _S = TypeVar('_S', sessionmaker, S, covariant=True)
+
+ACCOUNT_ID: Final = env['oanda.account_id']
+DEMO_ACCOUNT_ID: Final = env['oanda.demo_account_id']
+ACCESS_TOKEN: Final = env['oanda.access_token']
+
+# granularity
+M5: Final = 'M5'
+M15: Final = 'M15'
+M30: Final = 'M30'
+H1: Final = 'H1'
+H4: Final = 'H4'
+D1: Final = 'D1'
 
 LOGGING_CONFIG = {
     'version': 1,
@@ -66,5 +79,10 @@ LOGGING_CONFIG = {
             'level': logging.DEBUG,
             'propagate': 0
         },
-    }
+        'oanda': {
+            'handlers': ['modelsHandlers'],
+            'level': logging.DEBUG,
+            'propagate': 0
+        },
+    },
 }
