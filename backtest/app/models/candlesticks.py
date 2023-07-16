@@ -61,3 +61,14 @@ class UsdJpyBaseCandle4h(BaseMixin, Base):
 
 class UsdJpyBaseCandle1d(BaseMixin, Base):
     __tablename__ = 'usd_jpy_1d'
+
+
+# granularity: the_class_itself in dict
+candle_class = {
+    'M5': UsdJpyBaseCandle5m,
+    'M15': UsdJpyBaseCandle15m,
+    'M30': UsdJpyBaseCandle30m,
+    'H1': UsdJpyBaseCandle1h,
+    'H4': UsdJpyBaseCandle4h,
+    'D': UsdJpyBaseCandle1d,
+                }
