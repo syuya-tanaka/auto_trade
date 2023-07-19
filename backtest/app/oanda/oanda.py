@@ -1,17 +1,15 @@
 """oanda api used for backtesting."""
 from datetime import datetime
+from datetime import timedelta
 import logging.config
+from typing import Callable
 from typing import Final
-from typing import Optional
 
 import requests
 
-from app.oanda.utils import count_each_granularity
 from app.oanda.utils import endpoint
 from app.oanda.utils import generate_date
-from app.oanda.utils import hand_the_class
 from app.oanda.utils import stopper_for_each_time
-from app.models.candlesticks import candle_class
 from app.settings import ACCOUNT_ID
 from app.settings import ACCESS_TOKEN
 from app.settings import LOGGING_CONFIG
@@ -65,49 +63,62 @@ class RequestAPI(AccountAPI):
                  access_token: str = ACCESS_TOKEN) -> None:
         super().__init__(account_id, access_token)
 
-    def get_from_time(self,
-                      count: int,
-                      days: int,
-                      time: int) -> datetime:
-        """Get 'from_time'.
+    def get_to_time(self,
+                    count: int,
+                    days: int,
+                    time: int) -> str:
+        """Get 'to_time'.
         Args:
             count (int): This is for checking the number of laps.
             days (int): count_each_granularity(granularity)'s reutrn.
                         The number of days that decreases each cycle.
+            time (int): Each granularity
         """
         if count * days > stopper_for_each_time(time):
             print(f'{time} is Finish.')
 
-        if count == 1:
-            date = generate_date(days_offset=count)
-            return date
-
         days_ago = count * days
         date = generate_date(days_offset=days_ago)
-        return date
+        logger.debug(f'get_to_time: {date}, days_ago: {days_ago}')
+        return date.isoformat(timespec='seconds')
+
+    def get_from_time(self, count: int, days: int, time: int) -> str:
+        if count == 1:
+            # 閏年が2回
+            days_differencial = datetime.now() - timedelta(3652)
+            logger.debug(f'get_from_time: {days_differencial}')
+            return days_differencial.isoformat(timespec='seconds')
+        else:
+            return self.get_to_time(count - 1, days, time)
 
     def create_url(self,
                    granularity: str,
-                   start: datetime,
-                   end: Optional[datetime] = None,
-                   count: int = 5000,
+                   start: str,
+                   end: str,
                    candle_format: str = CANDLE_FORMAT,
-                   instrument: str = 'USD_JPY',
                    alignment_timezone: str = ALIGNMENT_TIMEZONE,
                    daily_alignment: int = DAILY_ALIGNMENT,
                    ) -> str:
-                            # f'to={end}&'\     ←一時的に外している。
-        self.ENDPOINT += f'count={count}&'\
-                            f'from={start}&'\
+        self.ENDPOINT += f'from={start}&'\
+                            f'to={end}&'\
                             f'candleFormat={candle_format}&'\
                             f'granularity={granularity}&'\
                             f'dailyAlignment={daily_alignment}&'\
                             f'alignmentTimezone={alignment_timezone}'
         return self.ENDPOINT
 
-    def request_data(self):
-        request_url = OANDA_URL + self.create_url(granularity='H1',
-                                                  start=generate_date().isoformat())
+    def request_data(self,
+                     granularity: str,
+                     start: Callable,
+                     end: Callable,
+                     count: int,
+                     days: int,
+                     time: int):
+        request_url = OANDA_URL + self.create_url(
+                                        granularity=granularity,
+                                        start=start(count, days, time),
+                                        end=end(count, days, time)
+                                        )
         r = requests.get(request_url, headers=HEADERS)
         if r.status_code == 200:
             logger.debug({

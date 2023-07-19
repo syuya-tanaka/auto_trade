@@ -37,16 +37,33 @@ def hand_the_class(class_name: Optional[str] = None, **kwargs):
         yield key, value
 
 
-def generate_date(days_offset: int = 1):
-    """Gets the date subtracted from the specified date.
+def from_granularity_to_time(granularity: str) -> int:
+    match granularity:
+        case granularity if granularity == 'M5':
+            return 5
+        case granularity if granularity == 'M15':
+            return 15
+        case granularity if granularity == 'M30':
+            return 30
+        case granularity if granularity == 'H1':
+            return 60
+        case granularity if granularity == 'H4':
+            return 240
+        case granularity if granularity == 'D':
+            return 1440
+    raise ValueError('Something other than "granularity" came in.')
+
+
+def generate_date(days_offset: int = 0):
+    """Calclulate the date backwards.
     Args:
         days_offset(int): The number of days to subtract.
 
     Returns:
         days_ago(datetime): Calculated date.
     """
-    today = datetime.datetime.today()
-    days_ago = today - datetime.timedelta(days=days_offset)
+    ten_years_ago = datetime.datetime(year=2013, month=7, day=18)
+    days_ago = ten_years_ago + datetime.timedelta(days=days_offset)
     return days_ago
 
 
@@ -67,13 +84,15 @@ def calculate_max_times_each_time(time: int, upper_limit: int = 5000) -> int:
                             can be made at one time is 5000.
 
     Returns:
-        max_times_each_once (int): The maximum number that
-                                    can be enforced at once.
+        a_few_days (int): The maximum number of requests that
+                            can run at once, converted to days.
     """
     day = 60 * 24
+    # 時間ごとの最大リクエスト回数
     daily_quantity = day // time
-    max_times_each_once = upper_limit // daily_quantity
-    return max_times_each_once
+    # その最大リクエスト回数を"日数"に変換
+    a_few_days = upper_limit // daily_quantity
+    return a_few_days
 
 
 def stopper_for_each_time(time: int) -> int:
