@@ -1,4 +1,5 @@
 """Prepare everything you need for the app."""
+import os
 import logging
 from typing import Final
 from typing import TypeVar
@@ -39,6 +40,8 @@ H1: Final = 'H1'
 H4: Final = 'H4'
 D1: Final = 'D1'
 
+log_file = os.path.dirname(__file__) + '/method_log.log'
+
 LOGGING_CONFIG = {
     'version': 1,
     'formatters': {
@@ -55,6 +58,12 @@ LOGGING_CONFIG = {
         },
         'modelsHandlers': {
             'class': 'logging.StreamHandler',
+            'formatter': 'standard',
+            'level': logging.DEBUG
+        },
+        'devHandlers': {
+            'class': 'logging.FileHandler',
+            'filename': log_file,
             'formatter': 'standard',
             'level': logging.DEBUG
         },
@@ -76,6 +85,11 @@ LOGGING_CONFIG = {
         },
         'models_candle': {
             'handlers': ['modelsHandlers'],
+            'level': logging.DEBUG,
+            'propagate': 0
+        },
+        'dev': {
+            'handlers': ['devHandlers'],
             'level': logging.DEBUG,
             'propagate': 0
         },
