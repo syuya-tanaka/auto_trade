@@ -9,8 +9,6 @@ RUN apt-get update && apt-get -y upgrade && \
     apt-get clean && \
     pip install --upgrade pip && pip install -r requirements.txt
 
-RUN pip install aiohttp==3.8.4
-
 FROM base AS dev
 COPY --from=base /usr/local/bin /usr/local/bin
 COPY --from=base /usr/local/lib/python3.10/site-packages \
