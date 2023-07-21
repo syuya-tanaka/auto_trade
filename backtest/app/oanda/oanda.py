@@ -16,7 +16,7 @@ from app.settings import LOGGING_CONFIG
 
 
 logging.config.dictConfig(LOGGING_CONFIG)
-logger = logging.getLogger('oanda')
+logger = logging.getLogger('dev')
 
 OANDA_URL: Final = 'https://api-fxtrade.oanda.com/'
 HEADERS: Final = {'Authorization': f'Bearer {ACCESS_TOKEN}'}
@@ -35,13 +35,15 @@ class AccountAPI(object):
 
     ENDPOINT = ""
 
-    def __init__(self, account_id: str, access_token: str) -> None:
+    def __init__(self,
+                 account_id: str = ACCOUNT_ID,
+                 access_token: str = ACCESS_TOKEN) -> None:
         self.account_id = account_id
         self.access_token = access_token
 
-    def __repr__(self) -> str:
-        return f'account_id={self.account_id}, \
-                access_token={self.access_token}'
+    def __str__(self) -> str:
+        return f'account_id={self.account_id},' \
+                f'access_token={self.access_token}'
 
     @classmethod
     def access_account(cls) -> str | ValueError:
@@ -76,17 +78,18 @@ class RequestAPI(AccountAPI):
         """
         if count * days > stopper_for_each_time(time):
             print(f'{time} is Finish.')
+            exit()
 
         days_ago = count * days
         date = generate_date(days_offset=days_ago)
-        logger.debug(f'get_to_time: {date}, days_ago: {days_ago}')
+        # logger.debug(f'get_to_time: {date}, days_ago: {days_ago}')
         return date.isoformat(timespec='seconds')
 
     def get_from_time(self, count: int, days: int, time: int) -> str:
         if count == 1:
             # 閏年が2回
             days_differencial = datetime.now() - timedelta(3652)
-            logger.debug(f'get_from_time: {days_differencial}')
+            # logger.debug(f'get_from_time: {days_differencial}')
             return days_differencial.isoformat(timespec='seconds')
         else:
             return self.get_to_time(count - 1, days, time)
@@ -99,13 +102,12 @@ class RequestAPI(AccountAPI):
                    alignment_timezone: str = ALIGNMENT_TIMEZONE,
                    daily_alignment: int = DAILY_ALIGNMENT,
                    ) -> str:
-        self.ENDPOINT += f'from={start}&'\
-                            f'to={end}&'\
-                            f'candleFormat={candle_format}&'\
-                            f'granularity={granularity}&'\
-                            f'dailyAlignment={daily_alignment}&'\
-                            f'alignmentTimezone={alignment_timezone}'
-        return self.ENDPOINT
+        return self.ENDPOINT + f'from={start}&'\
+                               f'to={end}&'\
+                               f'candleFormat={candle_format}&'\
+                               f'granularity={granularity}&'\
+                               f'dailyAlignment={daily_alignment}&'\
+                               f'alignmentTimezone={alignment_timezone}'
 
     def request_data(self,
                      granularity: str,
@@ -124,13 +126,13 @@ class RequestAPI(AccountAPI):
             logger.debug({
                 'action': 'request candles',
                 'status': 'request success.',
-                'request_url': request_url,
+                'request_url': r.url,
                 })
             return r.content
         logger.debug({
             'action': 'request candles',
             'status': 'request fail.',
-            'request_url': request_url,
+            'request_url': r.url,
             'message': r.content,
         })
         return request_url, r.content, r

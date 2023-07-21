@@ -1,6 +1,5 @@
 """various utilities."""
 import datetime
-import json
 from typing import Optional
 
 
@@ -76,7 +75,13 @@ def get_diff_in_days(data):
     pass
 
 
-def calculate_max_times_each_time(time: int, upper_limit: int = 5000) -> int:
+def get_daily_quantity(granularity: int):
+    daily_quantity = 24 * 60 // granularity
+    return daily_quantity
+
+
+def get_max_days_each_once(granularity: int,
+                           upper_limit: int = 5000) -> int:
     """Calculate the maximum number of times per hour.
     Args:
         time (int): e.g. 5, 15, 30, 60, 360, 1440
@@ -87,9 +92,12 @@ def calculate_max_times_each_time(time: int, upper_limit: int = 5000) -> int:
         a_few_days (int): The maximum number of requests that
                             can run at once, converted to days.
     """
-    day = 60 * 24
     # 時間ごとの最大リクエスト回数
-    daily_quantity = day // time
+    daily_quantity = get_daily_quantity(granularity)
+    # granularity==1440は例外
+    if granularity == 1440:
+        return 3650
+
     # その最大リクエスト回数を"日数"に変換
     a_few_days = upper_limit // daily_quantity
     return a_few_days
@@ -112,21 +120,28 @@ def count_each_granularity(granularity: str) -> int | ValueError:
     """"""
     match granularity:
         case granularity if granularity == 'M5':
-            max_times_5m = calculate_max_times_each_time(5)
+            max_times_5m = get_max_days_each_once(5)
             return max_times_5m
         case granularity if granularity == 'M15':
-            max_times_15m = calculate_max_times_each_time(15)
+            max_times_15m = get_max_days_each_once(15)
             return max_times_15m
         case granularity if granularity == 'M30':
-            max_times_30m = calculate_max_times_each_time(30)
+            max_times_30m = get_max_days_each_once(30)
             return max_times_30m
         case granularity if granularity == 'H1':
-            max_times_1h = calculate_max_times_each_time(60)
+            max_times_1h = get_max_days_each_once(60)
             return max_times_1h
         case granularity if granularity == 'H4':
-            max_times_4h = calculate_max_times_each_time(240)
+            max_times_4h = get_max_days_each_once(240)
             return max_times_4h
         case granularity if granularity == 'D':
-            max_times_1d = calculate_max_times_each_time(1440)
+            max_times_1d = get_max_days_each_once(1440)
             return max_times_1d
     raise ValueError('granularity did not match any.')
+
+
+def get_limit(func, time, days, quantity):
+    if time == 1440:
+        return 2
+
+    return func(time) // (days * quantity)
