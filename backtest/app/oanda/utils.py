@@ -1,5 +1,6 @@
 """various utilities."""
 import datetime
+import json
 from typing import Optional
 
 
@@ -145,3 +146,20 @@ def get_limit(func, time, days, quantity):
         return 2
 
     return func(time) // (days * quantity)
+
+
+def convert_from_bytes_to_dict(bytes_data):
+    candle_data = json.loads(bytes_data)
+    gen_candle_data = (data for data in candle_data['candles'])
+    return gen_candle_data
+
+
+def data_extraction(**kwargs):
+    time_string = kwargs['time'][:-4]
+    time = datetime.datetime.fromisoformat(time_string)
+    open = kwargs['mid']['o']
+    close = kwargs['mid']['c']
+    high = kwargs['mid']['h']
+    low = kwargs['mid']['l']
+    volume = kwargs['volume']
+    return (time, open, close, high, low, volume)

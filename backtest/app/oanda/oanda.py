@@ -10,6 +10,7 @@ import requests
 from app.oanda.utils import endpoint
 from app.oanda.utils import generate_date
 from app.oanda.utils import stopper_for_each_time
+from app.models.candlesticks import candle_class
 from app.settings import ACCOUNT_ID
 from app.settings import ACCESS_TOKEN
 from app.settings import LOGGING_CONFIG
