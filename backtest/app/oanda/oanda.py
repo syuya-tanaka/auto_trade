@@ -2,6 +2,8 @@
 from datetime import datetime
 from datetime import timedelta
 import logging.config
+import json
+from queue import Queue
 from typing import Callable
 from typing import Final
 
@@ -116,7 +118,8 @@ class RequestAPI(AccountAPI):
                      end: Callable,
                      count: int,
                      days: int,
-                     time: int):
+                     time: int,
+                     queue: "Queue"):
         request_url = OANDA_URL + self.create_url(
                                         granularity=granularity,
                                         start=start(count, days, time),
@@ -129,7 +132,10 @@ class RequestAPI(AccountAPI):
                 'status': 'request success.',
                 'request_url': r.url,
                 })
-            return r.content
+            # queueに追加する。
+            queue.put(json.loads(r.content))
+            return
+
         logger.debug({
             'action': 'request candles',
             'status': 'request fail.',

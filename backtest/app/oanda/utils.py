@@ -1,7 +1,19 @@
 """various utilities."""
 import datetime
+import logging.config
 import json
+from threading import RLock
+from queue import Queue
+from typing import Callable
+from typing import Generator
+from typing import List
 from typing import Optional
+from typing import Tuple
+
+from app.settings import LOGGING_CONFIG
+
+logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger('dev')
 
 
 def endpoint(url: str):
@@ -148,18 +160,80 @@ def get_limit(func, time, days, quantity):
     return func(time) // (days * quantity)
 
 
-def convert_from_bytes_to_dict(bytes_data):
-    candle_data = json.loads(bytes_data)
-    gen_candle_data = (data for data in candle_data['candles'])
-    return gen_candle_data
+def _size_queue(queue: "Queue") -> int:
+    size = queue.qsize()
+    return size
+
+
+def fetch_from_queue(queue, size):
+    for i in range(size):
+        candles_data = gen_candle_data(queue.get())
+        yield candles_data
+
+
+def gen_candle_data(candles_data):
+    candle_data = (data for data in candles_data['candles'])
+    logger.debug({
+        'acution': 'test',
+        'status': 'True',
+        'value': candle_data
+        })
+    return candle_data
+
+
+# マルチスレッドが解決してから
+# def convert_datetime_format(time: str):
+#     time = datetime.datetime.fromisoformat(time)
+#     time = time.strftime("%Y-%m-%d %H:%M:%S")
+#     time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
+#     return time
 
 
 def data_extraction(**kwargs):
     time_string = kwargs['time'][:-4]
     time = datetime.datetime.fromisoformat(time_string)
-    open = kwargs['mid']['o']
-    close = kwargs['mid']['c']
-    high = kwargs['mid']['h']
-    low = kwargs['mid']['l']
-    volume = kwargs['volume']
-    return (time, open, close, high, low, volume)
+    time = time.strftime("%Y-%m-%d %H:%M:%S")
+    time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
+    open = float(kwargs['mid']['o'])
+    close = float(kwargs['mid']['c'])
+    high = float(kwargs['mid']['h'])
+    low = float(kwargs['mid']['l'])
+    volume = int(kwargs['volume'])
+    return time, open, close, high, low, volume
+
+
+def to_insert_data(func_1: Callable,
+                   func_2: Callable,
+                   queue: "Queue",
+                   size: int,
+                   rlock: RLock,
+                   list: Optional[List] = None) -> Generator[
+                       Tuple[List[dict[str, str]]],
+                       None,
+                       None
+                       ]:
+    insert_list = []
+    rlock.acquire()
+    large_candles_data = func_1(queue, size)
+    for candles_data in large_candles_data:
+        # candles_dataはdictが沢山入ったList。
+        gen = (candle_data for candle_data in candles_data)
+        for candle_data in gen:
+            time, open, close, high, low, volume = func_2(**candle_data)
+            formatted_dict = {
+                'time': time,
+                'open': open,
+                'close': close,
+                'high': high,
+                'low': low,
+                'volume': volume
+            }
+            insert_list.append(formatted_dict)
+            # logger.debug({
+            #     'action': 'formatted_dict',
+            #     'status': 'success',
+            #     'value': formatted_dict,
+            # })
+        print('yieldでbulk_insertionの引数に送ります。')
+        yield insert_list
+    rlock.release()
