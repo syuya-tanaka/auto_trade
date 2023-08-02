@@ -105,7 +105,7 @@ def get_max_days_each_once(granularity: int,
         a_few_days (int): The maximum number of requests that
                             can run at once, converted to days.
     """
-    # 時間ごとの最大リクエスト回数
+    # 時間ごとの１日分のリクエスト回数
     daily_quantity = get_daily_quantity(granularity)
     # granularity==1440は例外
     if granularity == 1440:

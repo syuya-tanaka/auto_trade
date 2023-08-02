@@ -26,7 +26,7 @@ if __name__ == "__main__":
     queue = Queue()
     rlock = RLock()
     api_client = RequestAPI()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as exec_1:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as exec_1:
         for granularity, usd_jpy in hand_the_class(**candle_class):
             time = from_granularity_to_time(granularity)
             daily_quantity = get_daily_quantity(time)
@@ -53,29 +53,16 @@ if __name__ == "__main__":
                 result = future.result()
 
 
-                with concurrent.futures.ThreadPoolExecutor(max_workers=3) as exec_2:
-                    insert_list = []
-                    usd_jpy = candle_class[granularity]
-                    size = _size_queue(queue)
-                    futures = [
-                        exec_2.submit(
-                            bulk_insertion,
-                            usd_jpy,
-                            rlock,
-                            formatted_list
-                            )
-                        for formatted_list in to_insert_data(
-                            func_1=fetch_from_queue,
-                            func_2=data_extraction,
-                            queue=queue,
-                            size=size,
-                            rlock=rlock
-                        )]
+                insert_list = []
+                size = _size_queue(queue)
+                for formatted_list in to_insert_data(
+                    func_1=fetch_from_queue,
+                    func_2=data_extraction,
+                    queue=queue,
+                    size=size,
+                    rlock=rlock):
+                    bulk_insertion(usd_jpy, rlock, formatted_list)
 
-                    for future in as_completed(futures):
-                        result = future.result()
-
-                exec_2.shutdown(wait=True)
 
             print(granularity)
     exec_1.shutdown(wait=True)

@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "auto_trade"
-version = "0.3.0"
+version = "0.3.1"
 readme = "README.md"
 description = "Automated trading using Oanda API💩"
 authors = [{name = "syuya-tanaka", email = "masafumihorie0420@gmail.com"}]
