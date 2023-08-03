@@ -61,7 +61,7 @@ if __name__ == "__main__":
                     queue=queue,
                     size=size,
                     rlock=rlock):
-                    bulk_insertion(usd_jpy, rlock, formatted_list)
+                    bulk_insertion(usd_jpy, granularity, rlock, formatted_list)
 
             print(granularity)
     exec_1.shutdown(wait=True)

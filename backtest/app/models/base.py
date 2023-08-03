@@ -6,7 +6,7 @@ import logging.config
 from threading import RLock
 
 from sqlalchemy import inspect
-from sqlalchemy import insert
+from sqlalchemy.dialects.postgresql import insert
 
 from app.settings import engine
 from app.settings import Base
@@ -48,13 +48,23 @@ def inspect_db() -> bool:
     return bool(inspection_results)
 
 
-def bulk_insertion(model, rlock, insert_list):
+def bulk_insertion(model, granularity, rlock, insert_list):
     with session_scope(rlock) as session:
-        session.execute(
-            insert(model),
-            insert_list,
-        )
-        insert_list.clear()
+        if granularity == 'H4':
+            insert_stmt = insert(model).values(insert_list)
+            insert_stmt = insert_stmt.on_conflict_do_update(constraint='usd_jpy_4h_pkey',
+                                                            set_={
+                                                                'time': insert_stmt.excluded.time
+                                                            })
+            session.execute(insert_stmt)
+            insert_list.clear()
+
+        else:
+            session.execute(
+                insert(model),
+                insert_list,
+            )
+            insert_list.clear()
 
 
 @contextmanager
