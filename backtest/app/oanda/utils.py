@@ -50,6 +50,13 @@ def hand_the_class(class_name: Optional[str] = None, **kwargs):
 
 
 def from_granularity_to_time(granularity: str) -> int:
+    """Changed string granularity to int granularity.
+    Args:
+        granularity (str): String granularity.
+
+    Returns:
+        Granularity to minute of int.
+    """
     match granularity:
         case granularity if granularity == 'M5':
             return 5
@@ -79,16 +86,14 @@ def generate_date(days_offset: int = 0):
     return days_ago
 
 
-def get_diff_in_days(data):
-    """jsonからデータを取得して一番古い日付を取得。(DBの方で"time"カラムがprimary-keyなので重複は無し)
-
-    一旦保留
-
-    """
-    pass
-
-
 def get_daily_quantity(granularity: int):
+    """Returns the number of hours in a day divided by granularity.
+    Args:
+        granularity (int): e.g. 5, 15, 30, 60, 360, 1440
+    
+    Returns:
+        daily_quantity (int): The number of hours in a day divided by granularity.
+    """
     daily_quantity = 24 * 60 // granularity
     return daily_quantity
 
@@ -130,7 +135,18 @@ def stopper_for_each_time(time: int) -> int:
 
 
 def count_each_granularity(granularity: str) -> int | ValueError:
-    """"""
+    """Returns the maximum number of requests per granularity.
+    Args:
+        granularity (str): A string representing the time.
+
+    Returns:
+        max_times_5m (int): Maximum number of requests per 5-minute interval.
+        max_times_15m (int): Maximum number of requests per 15-minute interval.
+        max_times_30m (int): Maximum number of requests per 30-minute interval.
+        max_times_1h (int):  Maximum number of requests per 1-hour interval.
+        max_times_4h (int):  Maximum number of requests per 4-hour interval.
+        max_times_1d (int):  Maximum number of requests per day interval.
+    """
     match granularity:
         case granularity if granularity == 'M5':
             max_times_5m = get_max_days_each_once(5)
@@ -154,6 +170,13 @@ def count_each_granularity(granularity: str) -> int | ValueError:
 
 
 def get_limit(func, time, days, quantity):
+    """Limit number of requests per granularity.
+    Argss:
+        func (callable): Contains stopper_for_each_time method.
+        time (int): A value that converts granularity to int type minute.
+        days (int): Maximum number of requests per granularity.
+        quantity (int): Number of daily requests per granularity.
+    """
     if time == 1440:
         return 2
 
@@ -161,17 +184,39 @@ def get_limit(func, time, days, quantity):
 
 
 def _size_queue(queue: "Queue") -> int:
+    """Queue size.
+    Args:
+        queue (Queue): A queue containing request data.
+
+    Returns:
+        size (int): Number of data in queue.
+    """
     size = queue.qsize()
     return size
 
 
-def fetch_from_queue(queue, size):
+def fetch_from_queue(queue: "Queue", size: int) -> Generator[Generator[dict, None, None],
+                                                             None,
+                                                             None]:
+    """Fetch data from queue.
+    Args:
+        queue (Queue): Fetch queued data.
+        size (int): number of data in queue.
+
+    Returns: candles_data (Generator): Contains request data for one time.
+    """
     for i in range(size):
         candles_data = gen_candle_data(queue.get())
         yield candles_data
 
 
-def gen_candle_data(candles_data):
+def gen_candle_data(candles_data: dict) -> Generator[dict, None, None]:
+    """The data in the queue is further fetched by the generator.
+    Args:
+        candles_data (dict): A piece of data retrieved from the queue.
+
+    Returns:
+        candle_data (generator): One candle-stick."""
     candle_data = (data for data in candles_data['candles'])
     logger.debug({
         'acution': 'test',
@@ -181,19 +226,40 @@ def gen_candle_data(candles_data):
     return candle_data
 
 
-# マルチスレッドが解決してから
-# def convert_datetime_format(time: str):
-#     time = datetime.datetime.fromisoformat(time)
-#     time = time.strftime("%Y-%m-%d %H:%M:%S")
-#     time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
-#     return time
+def convert_datetime_format(time: str) -> datetime.datetime:
+    """Arrange the datetime to be stored in the DB.
+    Args:
+        time (str): datetime of the response data.
+
+    Returns:
+        formatted_time (datetime): Formatted datetime to put in DB.
+    """
+    datetime_time = datetime.datetime.fromisoformat(time)
+    str_time = datetime_time.strftime("%Y-%m-%d %H:%M:%S")
+    formatted_time = datetime.datetime.strptime(str_time, "%Y-%m-%d %H:%M:%S")
+    return formatted_time
 
 
-def data_extraction(**kwargs):
+def data_extraction(**kwargs) -> Tuple[datetime.datetime,
+                                       float,
+                                       float,
+                                       float,
+                                       float,
+                                       int]:
+    """Extract data to put in DB.
+    Args:
+        kwargs : Data to put in DB.
+
+    Returns:
+        time (datetime.datetime): Date and time.
+        open (float): Opening price.
+        close (float): Closing price.
+        high (float): High price.
+        low (float): Low price.
+        volume (int): Volume.
+    """
     time_string = kwargs['time'][:-4]
-    time = datetime.datetime.fromisoformat(time_string)
-    time = time.strftime("%Y-%m-%d %H:%M:%S")
-    time = datetime.datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
+    time = convert_datetime_format(time_string)
     open = float(kwargs['mid']['o'])
     close = float(kwargs['mid']['c'])
     high = float(kwargs['mid']['h'])
@@ -212,6 +278,18 @@ def to_insert_data(func_1: Callable,
                        None,
                        None
                        ]:
+    """Create a block for insertion each block into the DB.
+    Args:
+        func_1 (callable): fetch_from_queue method.
+        func_2 (callable): data_extraction method.
+        queue (Queue): A queue containing the requested data.
+        size (int): Queue size.
+        rlock (RLock): An instance of RLock.
+        list (List): Always None.
+
+    Returns:
+        insert_list (Generator[List, None, None]): One block to insert into DB collectively.
+    """
     insert_list = []
     rlock.acquire()
     large_candles_data = func_1(queue, size)
@@ -229,11 +307,6 @@ def to_insert_data(func_1: Callable,
                 'volume': volume
             }
             insert_list.append(formatted_dict)
-            # logger.debug({
-            #     'action': 'formatted_dict',
-            #     'status': 'success',
-            #     'value': formatted_dict,
-            # })
-        print('yieldでbulk_insertionの引数に送ります。')
+        print('yieldでbulk_insertionの引数に送る。')
         yield insert_list
     rlock.release()

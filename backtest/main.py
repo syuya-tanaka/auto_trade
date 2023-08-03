@@ -63,6 +63,5 @@ if __name__ == "__main__":
                     rlock=rlock):
                     bulk_insertion(usd_jpy, rlock, formatted_list)
 
-
             print(granularity)
     exec_1.shutdown(wait=True)
