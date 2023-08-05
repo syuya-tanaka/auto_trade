@@ -268,7 +268,7 @@ def data_extraction(**kwargs) -> Tuple[datetime.datetime,
     return time, open, close, high, low, volume
 
 
-def to_insert_data(func_1: Callable,
+def to_upsert_data(func_1: Callable,
                    func_2: Callable,
                    queue: "Queue",
                    size: int,

@@ -1,4 +1,4 @@
-"""Database definition."""
+"""Database-related."""
 from typing import Any
 from typing import Generator
 from contextlib import contextmanager
@@ -48,14 +48,14 @@ def inspect_db() -> bool:
     return bool(inspection_results)
 
 
-def bulk_insertion(model, granularity, rlock, insert_list):
+def bulk_upsert(model, granularity, rlock, insert_list):
     with session_scope(rlock) as session:
         if granularity == 'H4':
             insert_stmt = insert(model).values(insert_list)
-            insert_stmt = insert_stmt.on_conflict_do_update(constraint='usd_jpy_4h_pkey',
-                                                            set_={
-                                                                'time': insert_stmt.excluded.time
-                                                            })
+            insert_stmt = insert_stmt.on_conflict_do_update(
+                constraint='usd_jpy_4h_pkey',
+                set_={'time': insert_stmt.excluded.time}
+                )
             session.execute(insert_stmt)
             insert_list.clear()
 
@@ -81,6 +81,3 @@ def session_scope(rlock: RLock) -> Generator[_S, Any, Any]:
         session.close()
         rlock.release()
 
-
-init_db()
-# delete_db()

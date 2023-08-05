@@ -3,7 +3,7 @@ from concurrent.futures import as_completed
 from queue import Queue
 from threading import RLock
 
-from app.models.base import bulk_insertion
+from app.models.base import bulk_upsert
 from app.models.base import init_db
 from app.models.candlesticks import candle_class
 from app.oanda.oanda import RequestAPI
@@ -17,11 +17,10 @@ from app.oanda.utils import fetch_from_queue
 from app.oanda.utils import from_granularity_to_time
 from app.oanda.utils import hand_the_class
 from app.oanda.utils import stopper_for_each_time
-from app.oanda.utils import to_insert_data
+from app.oanda.utils import to_upsert_data
 
 
-if __name__ == "__main__":
-    print("this is main.py")
+def save_in_bulk_db_data():
     init_db()
     queue = Queue()
     rlock = RLock()
@@ -55,13 +54,21 @@ if __name__ == "__main__":
 
                 insert_list = []
                 size = _size_queue(queue)
-                for formatted_list in to_insert_data(
+                for formatted_list in to_upsert_data(
                     func_1=fetch_from_queue,
                     func_2=data_extraction,
                     queue=queue,
                     size=size,
                     rlock=rlock):
-                    bulk_insertion(usd_jpy, granularity, rlock, formatted_list)
+                    bulk_upsert(usd_jpy, granularity, rlock, formatted_list)
 
             print(granularity)
     exec_1.shutdown(wait=True)
+
+
+def main():
+    save_in_bulk_db_data()
+
+
+if __name__ == "__main__":
+    main()
