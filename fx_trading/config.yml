@@ -1,4 +1,0 @@
-oanda:
-  account_id: ${ACCOUNT_ID}
-  api_password: ${API_PASSWORD}
-  access_token: ${TOKEN}

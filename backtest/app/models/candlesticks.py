@@ -1,13 +1,16 @@
 """table definition."""
 import logging.config
+from threading import RLock
+from typing import List
+from typing import Optional
 
 from sqlalchemy import Column
 from sqlalchemy import DateTime
 from sqlalchemy import Integer
 from sqlalchemy import Float
 
-from app.models.base import Base
 from app.models.base import session_scope
+from app.settings import Base
 from app.settings import LOGGING_CONFIG
 
 
@@ -24,19 +27,12 @@ class BaseMixin(object):
     volume = Column(Integer)
 
     @classmethod
-    def create(cls, time, open, close, high, low, volume) -> None:
-        candle = cls(time=time,
-                     open=open,
-                     close=close,
-                     high=high,
-                     low=low,
-                     volume=volume)
-        with session_scope() as session:
-            session.add(candle)
-        logger.debug({
-            'action': 'create a ORM-object.',
-            'status': 'success'
-        })
+    def fetch_data_in_desc_order(cls, rlock: RLock):
+        """Fetch data in descending order."""
+        with session_scope(rlock) as session:
+            query_obj = session.query(cls).order_by(cls.time.asc())
+    
+        return query_obj
 
 
 class UsdJpyBaseCandle5m(BaseMixin, Base):

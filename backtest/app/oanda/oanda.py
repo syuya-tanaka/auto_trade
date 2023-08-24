@@ -85,14 +85,11 @@ class RequestAPI(AccountAPI):
 
         days_ago = count * days
         date = generate_date(days_offset=days_ago)
-        # logger.debug(f'get_to_time: {date}, days_ago: {days_ago}')
         return date.isoformat(timespec='seconds')
 
     def get_from_time(self, count: int, days: int, time: int) -> str:
         if count == 1:
-            # 閏年が2回
             days_differencial = datetime.now() - timedelta(3652)
-            # logger.debug(f'get_from_time: {days_differencial}')
             return days_differencial.isoformat(timespec='seconds')
         else:
             return self.get_to_time(count - 1, days, time)
@@ -132,7 +129,6 @@ class RequestAPI(AccountAPI):
                 'status': 'request success.',
                 'request_url': r.url,
                 })
-            # queueに追加する。
             queue.put(json.loads(r.content))
             return
 

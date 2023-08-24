@@ -10,6 +10,12 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
+from app.models.candlesticks import UsdJpyBaseCandle5m
+from app.models.candlesticks import UsdJpyBaseCandle15m
+from app.models.candlesticks import UsdJpyBaseCandle30m
+from app.models.candlesticks import UsdJpyBaseCandle1h
+from app.models.candlesticks import UsdJpyBaseCandle4h
+from app.models.candlesticks import UsdJpyBaseCandle1d
 from app.settings import LOGGING_CONFIG
 
 logging.config.dictConfig(LOGGING_CONFIG)
@@ -70,6 +76,30 @@ def from_granularity_to_time(granularity: str) -> int:
             return 240
         case granularity if granularity == 'D':
             return 1440
+    raise ValueError('Something other than "granularity" came in.')
+
+
+def from_granularity_to_model(granularity: str):
+    """Changed string granularity to model.
+    Args:
+        granularity (str): String granularity.
+
+    Returns:
+        From granularity to model.
+    """
+    match granularity:
+        case granularity if granularity == 'M5':
+            return UsdJpyBaseCandle5m
+        case granularity if granularity == 'M15':
+            return UsdJpyBaseCandle15m
+        case granularity if granularity == 'M30':
+            return UsdJpyBaseCandle30m
+        case granularity if granularity == 'H1':
+            return UsdJpyBaseCandle1h
+        case granularity if granularity == 'H4':
+            return UsdJpyBaseCandle4h
+        case granularity if granularity == 'D':
+            return UsdJpyBaseCandle1d
     raise ValueError('Something other than "granularity" came in.')
 
 
