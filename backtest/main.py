@@ -1,23 +1,34 @@
 import concurrent.futures
 from concurrent.futures import as_completed
+import logging
+import logging.config
 from queue import Queue
+import sys
 from threading import RLock
 
+from app.controllers.socket_server import socket_server_run
 from app.models.base import bulk_upsert
+from app.models.base import count_candles_data
+from app.models.base import fetch_desc_data_from_data
 from app.models.base import init_db
 from app.models.candlesticks import candle_class
 from app.oanda.oanda import RequestAPI
 from app.oanda.utils import _size_queue
 from app.oanda.utils import data_extraction
-from app.oanda.utils import gen_candle_data
 from app.oanda.utils import get_daily_quantity
 from app.oanda.utils import get_max_days_each_once
 from app.oanda.utils import get_limit
 from app.oanda.utils import fetch_from_queue
+from app.oanda.utils import from_granularity_to_model
 from app.oanda.utils import from_granularity_to_time
 from app.oanda.utils import hand_the_class
 from app.oanda.utils import stopper_for_each_time
 from app.oanda.utils import to_upsert_data
+from app.settings import LOGGING_CONFIG
+
+
+logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger('dev')
 
 
 def save_in_bulk_db_data():
@@ -51,7 +62,6 @@ def save_in_bulk_db_data():
             for future in as_completed(futures):
                 result = future.result()
 
-
                 insert_list = []
                 size = _size_queue(queue)
                 for formatted_list in to_upsert_data(
@@ -67,8 +77,13 @@ def save_in_bulk_db_data():
 
 
 def main():
-    save_in_bulk_db_data()
+    # ここでsocketで外部サーバーからのデータを受信する。
+    if count_candles_data(candle_class['M5']) >= 300000:
+        socket_server_run()
 
+    else:
+        # oanda apiを使用してデータをフェッチ。
+        save_in_bulk_db_data()
 
 if __name__ == "__main__":
     main()
