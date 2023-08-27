@@ -109,3 +109,4 @@ services:
       - 4325:5432
     tty:
       true
+
