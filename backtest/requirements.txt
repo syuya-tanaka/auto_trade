@@ -3,4 +3,5 @@ flask==2.3.2
 sqlalchemy==2.0.17
 psycopg2-binary
 envyaml==1.10.211231
-oandapyV20
+requests==2.31.0
+

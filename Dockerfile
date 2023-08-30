@@ -18,3 +18,4 @@ FROM base AS prod
 COPY --from=base /usr/local/bin /usr/local/bin
 COPY --from=base /usr/local/lib/python3.10/site-packages \
     /usr/local/lib/python3.10/site-packages
+

@@ -1,5 +1,6 @@
 oanda:
   account_id: ${ACCOUNT_ID}
+  demo_account_id: ${DEMO_ACCOUNT_ID}
   api_password: ${PASSWORD}
   access_token: ${ACCESS_TOKEN}
 
