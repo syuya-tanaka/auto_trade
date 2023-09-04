@@ -1,5 +1,4 @@
 """socket server."""
-import http.server
 import logging
 import logging.config
 import pickle
@@ -23,14 +22,15 @@ class OriginalRequestHandler(socketserver.BaseRequestHandler):
     def handle(self) -> None:
         super().handle()
         recv_data = self.request.recv(1024).decode('utf-8')
-        print('recieved message', recv_data)
+        print('received message', recv_data)
 
         if count_candles_data(candle_class[recv_data]):
             rlock = RLock()
             # fetch_desc_data_from_data()の第一引数は外部サーバーから送られてきたデータを入れる。
-            desc_data, data_count = fetch_desc_data_from_data(recv_data,
-                                                              from_granularity_to_model,
-                                                              rlock)
+            desc_data, data_count = fetch_desc_data_from_data(
+                                                recv_data,
+                                                from_granularity_to_model,
+                                                rlock)
             gen_desc_data = (data for data in desc_data)
             loop_count = 1
             count = 0
@@ -43,13 +43,13 @@ class OriginalRequestHandler(socketserver.BaseRequestHandler):
                     'open': data.open,
                     'close': data.close,
                     'high': data.high,
-                    'close': data.close,
+                    'low': data.low,
                     'volume': data.volume
                 }
 
-                if count >= 500 or data_count / loop_count - 1 == loop_count:
+                if count >= 500 or (data_count / loop_count) - 1 == loop_count:
                     pickled = pickle.dumps(pickle_list)
-                    print(pickle_list)
+                    print(pickle_list, len(pickled))
                     self.request.send(pickled)
                     pickle_list.clear()
                     count = 0

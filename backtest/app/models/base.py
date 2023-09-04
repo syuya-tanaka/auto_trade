@@ -53,7 +53,7 @@ def count_candles_data(model) -> int:
     session = Session()
     data_count = session.query(model).count()
     return data_count
-    
+
 
 def bulk_upsert(model, granularity, rlock, insert_list):
     with session_scope(rlock) as session:
@@ -128,4 +128,3 @@ def session_scope(rlock: RLock) -> Generator[_S, Any, Any]:
     finally:
         session.close()
         rlock.release()
-

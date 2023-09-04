@@ -32,14 +32,6 @@ ACCOUNT_ID: Final = env['oanda.account_id']
 DEMO_ACCOUNT_ID: Final = env['oanda.demo_account_id']
 ACCESS_TOKEN: Final = env['oanda.access_token']
 
-# granularity
-M5: Final = 'M5'
-M15: Final = 'M15'
-M30: Final = 'M30'
-H1: Final = 'H1'
-H4: Final = 'H4'
-D1: Final = 'D1'
-
 log_file = os.path.dirname(__file__) + '/method_log.log'
 
 LOGGING_CONFIG = {

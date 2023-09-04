@@ -1,8 +1,6 @@
 """table definition."""
 import logging.config
 from threading import RLock
-from typing import List
-from typing import Optional
 
 from sqlalchemy import Column
 from sqlalchemy import DateTime
@@ -31,7 +29,7 @@ class BaseMixin(object):
         """Fetch data in descending order."""
         with session_scope(rlock) as session:
             query_obj = session.query(cls).order_by(cls.time.asc())
-    
+
         return query_obj
 
 
@@ -68,4 +66,3 @@ candle_class = {
     'H4': UsdJpyBaseCandle4h,
     'D': UsdJpyBaseCandle1d,
                 }
-

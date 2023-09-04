@@ -103,8 +103,8 @@ def from_granularity_to_model(granularity: str):
     raise ValueError('Something other than "granularity" came in.')
 
 
-def generate_date(days_offset: int = 0):
-    """Calclulate the date backwards.
+def generate_date(days_offset: int = 0) -> datetime.datetime:
+    """Calculate the date backwards.
     Args:
         days_offset(int): The number of days to subtract.
 
@@ -116,13 +116,14 @@ def generate_date(days_offset: int = 0):
     return days_ago
 
 
-def get_daily_quantity(granularity: int):
+def get_daily_quantity(granularity: int) -> int:
     """Returns the number of hours in a day divided by granularity.
     Args:
         granularity (int): e.g. 5, 15, 30, 60, 360, 1440
-    
+
     Returns:
-        daily_quantity (int): The number of hours in a day divided by granularity.
+        daily_quantity (int): The number of hours in a day
+                                    divided by granularity.
     """
     daily_quantity = 24 * 60 // granularity
     return daily_quantity
@@ -201,7 +202,7 @@ def count_each_granularity(granularity: str) -> int | ValueError:
 
 def get_limit(func, time, days, quantity):
     """Limit number of requests per granularity.
-    Argss:
+    Args:
         func (callable): Contains stopper_for_each_time method.
         time (int): A value that converts granularity to int type minute.
         days (int): Maximum number of requests per granularity.
@@ -209,7 +210,6 @@ def get_limit(func, time, days, quantity):
     """
     if time == 1440:
         return 2
-
     return func(time) // (days * quantity)
 
 
@@ -225,9 +225,10 @@ def _size_queue(queue: "Queue") -> int:
     return size
 
 
-def fetch_from_queue(queue: "Queue", size: int) -> Generator[Generator[dict, None, None],
-                                                             None,
-                                                             None]:
+def fetch_from_queue(queue: "Queue", size: int) -> Generator[
+                                                Generator[dict, None, None],
+                                                None,
+                                                None]:
     """Fetch data from queue.
     Args:
         queue (Queue): Fetch queued data.
@@ -249,8 +250,8 @@ def gen_candle_data(candles_data: dict) -> Generator[dict, None, None]:
         candle_data (generator): One candle-stick."""
     candle_data = (data for data in candles_data['candles'])
     logger.debug({
-        'acution': 'test',
-        'status': 'True',
+        'action': 'test',
+        'status': 'success',
         'value': candle_data
         })
     return candle_data
@@ -318,7 +319,7 @@ def to_upsert_data(func_1: Callable,
         list (List): Always None.
 
     Returns:
-        insert_list (Generator[List, None, None]): One block to insert into DB collectively.
+        insert_list (Generator[List, None, None]): One block to insert into DB.
     """
     insert_list = []
     rlock.acquire()
@@ -337,6 +338,9 @@ def to_upsert_data(func_1: Callable,
                 'volume': volume
             }
             insert_list.append(formatted_dict)
-        print('yieldでbulk_insertionの引数に送る。')
+        logger.debug({
+            'action': 'preparing to store data together.',
+            'status': 'success'
+        })
         yield insert_list
     rlock.release()

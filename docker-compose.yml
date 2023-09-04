@@ -27,7 +27,7 @@ services:
       network1:
         ipv4_address: 172.18.0.6
     volumes:
-      - ./fx_trading:/src
+      - ./client_server:/src
     ports:
       - 8800:8000
     tty:

@@ -75,7 +75,7 @@ class RequestAPI(AccountAPI):
         """Get 'to_time'.
         Args:
             count (int): This is for checking the number of laps.
-            days (int): count_each_granularity(granularity)'s reutrn.
+            days (int): count_each_granularity(granularity)'s return.
                         The number of days that decreases each cycle.
             time (int): Each granularity
         """
